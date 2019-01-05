@@ -42,10 +42,7 @@ nconf
     DATA_BACKEND: 'datastore',
 
     // This is the id of your project in the Google Cloud Developers Console.
-    GCLOUD_PROJECT: 'tell-me-more-iot',
-
-    MYSQL_USER: '',
-    MYSQL_PASSWORD: '',
+    GCLOUD_PROJECT: '',
 
     PORT: 8080,
   });
@@ -53,13 +50,6 @@ nconf
 // Check for required settings
 checkConfig('GCLOUD_PROJECT');
 
-if (nconf.get('DATA_BACKEND') === 'cloudsql') {
-  checkConfig('MYSQL_USER');
-  checkConfig('MYSQL_PASSWORD');
-  if (nconf.get('NODE_ENV') === 'production') {
-    checkConfig('INSTANCE_CONNECTION_NAME');
-  }
-}
 
 function checkConfig(setting) {
   if (!nconf.get(setting)) {

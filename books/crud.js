@@ -16,6 +16,29 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
+const Mam = require('../lib/mam.client.js');
+const IOTA = require('iota.lib.js');
+const iota = new IOTA({ provider: 'https://nodes.devnet.thetangle.org:443'});
+
+const MODE = 'restricted'
+let key;
+var responseData = [];
+
+// Initialise MAM State
+let mamState = Mam.init(iota);
+key = iota.utils.toTrytes("tmmiot-iota-sideky");
+mamState = Mam.changeMode(mamState, MODE, key);
+
+// Receive data from the tangle
+const executeDataRetrieval = async function (rootVal, keyVal, callback) {
+    let resp = await Mam.fetch(rootVal, MODE, keyVal, function(data) {
+        var json = iota.utils.fromTrytes(data);
+        responseData.push(JSON.parse(json));
+    });
+    callback(false, responseData);  
+    //executeDataRetrieval(resp.nextRoot, keyVal);
+}
+
 function getModel() {
   return require(`./model-${require('../config').get('DATA_BACKEND')}`);
 }
@@ -37,7 +60,16 @@ router.use((req, res, next) => {
  * Display a page of books (up to ten at a time).
  */
 router.get('/', (req, res, next) => {
-  getModel().list(10, req.query.pageToken, (err, entities, cursor) => {
+  console.log("entered");
+  executeDataRetrieval("VNOMGQVGRAXDLNODOIOAH9KPVESRARIBYJA9VTUWKRPFAZNRHJYCPKFAIWSYHRNJCBHETCYSBCMEZUPYK", key, function(err, success) {
+        console.log("yes:" + JSON.stringify(success));
+        res.render('books/list.pug', {
+            books: success,
+        });
+        responseData = [];
+    });
+    
+  /*getModel().list(10, req.query.pageToken, (err, entities, cursor) => {
     if (err) {
       next(err);
       return;
@@ -46,7 +78,7 @@ router.get('/', (req, res, next) => {
       books: entities,
       nextPageToken: cursor,
     });
-  });
+  });*/
 });
 
 /**

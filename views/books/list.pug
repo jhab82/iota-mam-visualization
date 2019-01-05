@@ -12,26 +12,38 @@
  limitations under the License.
 
 extends ../base.pug
-
+            
 block content
-  h3 Configurations
+  h3 visualization
   
+  script(type='text/javascript').
+      google.charts.load('current', {'packages':['bar', 'table', 'corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+      
+       function drawChart(type) {
+           data = new google.visualization.DataTable();
+           data.addColumn('string', 'date');
+           data.addColumn('number', 'pm10');
+           data.addColumn('number', 'H');
+           
+           data.addRows([
+                        [(#{books[0].time}).toString(), #{books[0].pm10}, #{books[0].H} ],
+                        [(#{books[1].time}).toString(), #{books[1].pm10}, #{books[1].H} ],
+                        [(#{books[2].time}).toString(), #{books[2].pm10}, #{books[2].H} ],
+           ]);
+
+           options = {
+            'title': 'Air quality measurement',
+            'width': 400,
+            'height': 400
+            };
+            chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+            chart.draw(data, options);
+       }
+  #chart_div
+
   a(href="/books/add", class='btn btn-success btn-sm')
     i.glyphicon.glyphicon-plus
     span  Add configuration
 
-  each book in books
-    .media
-      a(href=`/books/${book.id}`)
-        .media-body
-          h4= book.title
-          small= book.devices + " devices -- " + book.messageSize + " bytes per message -- " + book.messageFrequency + " messages per device in one hour"
-
-  if !books.length
-    p No configurations found.
-
-  if nextPageToken
-    nav
-      ul.pager
-        li
-          a(href=`?pageToken=${encodeURIComponent(nextPageToken)}`) More
+  

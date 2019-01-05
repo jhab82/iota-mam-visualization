@@ -1,3 +1,3 @@
-# Google Cloud Iot Cost Configurator
+# IOTA MAM env sensor visualization
 
-Based on tutorial from google nodejs-getting-strated-tests
+
