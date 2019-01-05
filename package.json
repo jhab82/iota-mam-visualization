@@ -1,13 +1,13 @@
 {
-  "name": "nodejs-getting-started",
-  "description": "End to end sample for running Node.js applications on Google Cloud Platform",
+  "name": "iota-mam-env-vis",
+  "description": "visualization of mam stream sensor",
   "version": "1.0.0",
   "license": "Apache-2.0",
-  "author": "Google Inc.",
+  "author": "jan",
   "engines": {
     "node": ">=8"
   },
-  "repository": "https://github.com/GoogleCloudPlatform/nodejs-getting-started",
+  "repository": "https://github.com/jhab82/iota-mam-visualization",
   "main": "app.js",
   "private": true,
   "cloud-repo-tools": {
@@ -18,7 +18,7 @@
         "args": [
           "app.js"
         ],
-        "msg": "Bookshelf - Node.js on Google Cloud Platform"
+        "msg": "IOTA MAM visualization"
       }
     }
   },
