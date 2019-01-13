@@ -1,0 +1,91 @@
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js">
+
+	</script>
+	<script type="text/javascript">
+		google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(drawInit);
+
+    var data;
+    var options;
+    var chart = null;
+    var c = 1;
+
+    function drawChart() {
+        // Instantiate and draw our chart, passing in some options.
+        if (chart == null) {
+            chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+        }
+        chart.draw(data, options);
+    }
+
+function drawInit() {
+
+    data = new google.visualization.DataTable();
+    data.addColumn('datetime', 'Date');
+	data.addColumn('number', 'pm2.5');
+    data.addColumn('number', 'pm10');
+	data.addColumn('number', 'T [°C]');
+    data.addColumn('number', 'Hum [%]');
+    
+    // Set chart options
+    options = {
+        	title: 'Air quality measurement',
+            width : 600,
+            height: 400,
+			series: {
+          	0: {targetAxisIndex: 0},
+          	1: {targetAxisIndex: 0},
+			2: {targetAxisIndex: 1},
+			3: {targetAxisIndex: 1},
+        },
+        vAxes: {
+          // Adds titles to each axis.
+          0: {title: ' [mu g/m^3]'},
+          1: {title: ' °C / %'},
+        },
+    };
+
+    drawChart();
+};
+
+async function drawNext() {
+    var link = "/books/"+ document.getElementById("userInputRoot").value;
+    const response1 = await fetch(link);
+    const respJSON = await response1.json();
+	
+    if (respJSON.payload === "invalid") {
+        document.getElementById("userInputRoot").value = "Invalid root";
+    } else if (respJSON.payload === "lastRoot") {
+		 alert("This was the last measurement in this channel")
+	} else {
+        var d = new Date();
+        d.setTime(respJSON.payload.time);
+        data.addRow([d, parseFloat(respJSON.payload.pm2p5), parseFloat(respJSON.payload.pm10), parseFloat(respJSON.payload.T), parseFloat(respJSON.payload.H)]);
+        document.getElementById("userInputRoot").value = respJSON.nextRoot;
+        drawChart();
+    }
+};
+	</script>
+</head>
+
+<body>
+
+	<nav class="navbar navbar-default">
+		<nav class="navbar-header">
+			<nav class="navbar-brand">MAM Visualization</nav>
+		</nav>
+	</nav>
+	<div class="form-group">
+		<label for="nameRoot">Public next root address</label>
+        <input type="text" class="form-control" id="userInputRoot" value="FHZCFNVUZYZBHOUILNXXPHXWXDVTAAOTMQAYLUPCNLLQID9KVXZJCDHFLUCYG9GBEZMLE9SGGEZTABUIE" />
+        <button type="submit" onclick="drawNext()" class"btn btn-primary">Get the next measurement</button>
+        <div id="chart_div"></div>  
+    </div>
+  </body>
+</html>

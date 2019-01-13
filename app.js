@@ -17,20 +17,21 @@ const path = require('path');
 const express = require('express');
 const config = require('./config');
 
+var indexRouter = require('./books/index');
+
 const app = express();
 
-app.disable('etag');
+//app.disable('etag');
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+app.set('view engine', 'ejs');
+
 app.set('trust proxy', true);
+
+app.use('/', indexRouter);
 
 // Books
 app.use('/books', require('./books/crud'));
 
-// Redirect root to /books
-app.get('/', (req, res) => {
-  res.redirect('/books');
-});
 
 // Basic 404 handler
 app.use((req, res) => {

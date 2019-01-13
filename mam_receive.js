@@ -20,8 +20,8 @@ const Mam = require('./lib/mam.client.js');
 const IOTA = require('iota.lib.js');
 const iota = new IOTA({ provider: 'https://nodes.devnet.thetangle.org:443'});
 
-const MODE = 'restricted'; // public, private or restricted
-const SIDEKEY = 'tmmiot-iota-sideky'; // Enter only ASCII characters. Used only in restricted mode
+const MODE = 'public'; // public, private or restricted
+//const SIDEKEY = 'tmmiot-iota-sideky'; // Enter only ASCII characters. Used only in restricted mode
 
 let root;
 let key;
@@ -51,12 +51,22 @@ if (MODE == 'restricted') {
 
 // Receive data from the tangle
 const executeDataRetrieval = async function(rootVal, keyVal) {
-    let resp = await Mam.fetch(rootVal, MODE, keyVal, function(data) {
+    /*
+    var resp = await Mam.fetchSingle(rootVal, MODE, keyVal, function(data) {
         var json = iota.utils.fromTrytes(data);
         console.log(json);
-    });
+        
+    });*/
+    var resp = await Mam.fetchSingle(rootVal, MODE, keyVal);
 
-    executeDataRetrieval(resp.nextRoot, keyVal);
+    //console.log(JSON.stringify(resp));
+    //console.log("payload % 2: " +((resp.payload).length % 2))    
+    //console.log("payload length: " + (resp.payload).length)
+    console.log(iota.utils.fromTrytes(resp.payload))
+    console.log(resp.nextRoot)
+    //console.log("done")
+    
+    //executeDataRetrieval(resp.nextRoot, keyVal);
 }
 
 executeDataRetrieval(root, key);

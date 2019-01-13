@@ -20,28 +20,9 @@ const Mam = require('../lib/mam.client.js');
 const IOTA = require('iota.lib.js');
 const iota = new IOTA({ provider: 'https://nodes.devnet.thetangle.org:443'});
 
-const MODE = 'restricted'
+const MODE = 'public';
 let key;
-var responseData = [];
-
-// Initialise MAM State
-let mamState = Mam.init(iota);
-key = iota.utils.toTrytes("tmmiot-iota-sideky");
-mamState = Mam.changeMode(mamState, MODE, key);
-
-// Receive data from the tangle
-const executeDataRetrieval = async function (rootVal, keyVal, callback) {
-    let resp = await Mam.fetch(rootVal, MODE, keyVal, function(data) {
-        var json = iota.utils.fromTrytes(data);
-        responseData.push(JSON.parse(json));
-    });
-    callback(false, responseData);  
-    //executeDataRetrieval(resp.nextRoot, keyVal);
-}
-
-function getModel() {
-  return require(`./model-${require('../config').get('DATA_BACKEND')}`);
-}
+var nextRoot;
 
 const router = express.Router();
 
@@ -54,52 +35,55 @@ router.use((req, res, next) => {
   next();
 });
 
+// Initialise MAM State
+let mamState = Mam.init(iota);
+//key = iota.utils.toTrytes("tmmiot-iota-sideky");
+mamState = Mam.changeMode(mamState, MODE);
+
+// Receive data from the tangle
+const executeDataRetrieval = async function (rootVal, keyVal, callback) {
+    try {
+        let resp = await Mam.fetchSingle(rootVal, MODE, keyVal);
+        callback(false, resp);
+    } catch (err) {
+        callback(true, {"payload": "lastRoot", "nextRoot": nextRoot});
+    }
+}
+
+
 /**
  * GET /books
  *
  * Display a page of books (up to ten at a time).
  */
-router.get('/', (req, res, next) => {
-  console.log("entered");
-  executeDataRetrieval("VNOMGQVGRAXDLNODOIOAH9KPVESRARIBYJA9VTUWKRPFAZNRHJYCPKFAIWSYHRNJCBHETCYSBCMEZUPYK", key, function(err, success) {
-        console.log("yes:" + JSON.stringify(success));
-        res.render('books/list.pug', {
-            books: success,
-        });
-        responseData = [];
+router.get('/:id', (req, res, next) => {
+  if (!iota.valid.isAddress(req.params.id)) {
+      res.json({"payload": "invalid", "nextRoot": nextRoot})
+  } else {
+        executeDataRetrieval(req.params.id, key, function(err, success) {
+            if (err) {
+                console.log("error: " + err);
+                res.json(success)
+            } else {
+                success.payload = JSON.parse(iota.utils.fromTrytes(success.payload));
+                res.json(success);
+            }
     });
-    
-  /*getModel().list(10, req.query.pageToken, (err, entities, cursor) => {
-    if (err) {
-      next(err);
-      return;
-    }
-    res.render('books/list.pug', {
-      books: entities,
-      nextPageToken: cursor,
-    });
-  });*/
+  }
 });
 
-/**
- * GET /books/add
- *
- * Display a form for creating a book.
- */
-// [START add_get]
-router.get('/add', (req, res) => {
-  res.render('books/form.pug', {
-    book: {},
-    action: 'Add',
-  });
-});
-// [END add_get]
+/*
+function getModel() {
+  return require(`./model-${require('../config').get('DATA_BACKEND')}`);
+}
+*/
 
-/**
- * POST /books/add
- *
- * Create a book.
- */
+
+module.exports = router;
+
+
+/*
+
 // [START add_post]
 router.post('/add', (req, res, next) => {
   const data = req.body;
@@ -150,46 +134,3 @@ router.post('/:book/edit', (req, res, next) => {
   });
 });
 */
-/**
- * GET /books/:id
- *
- * Display a book.
- */
-router.get('/:book', (req, res, next) => {
-  getModel().read(req.params.book, (err, entity) => {
-    if (err) {
-      next(err);
-      return;
-    }
-    res.render('books/view.pug', {
-      book: entity,
-    });
-  });
-});
-
-/**
- * GET /books/:id/delete
- *
- * Delete a book.
- 
-router.get('/:book/delete', (req, res, next) => {
-  getModel().delete(req.params.book, err => {
-    if (err) {
-      next(err);
-      return;
-    }
-    res.redirect(req.baseUrl);
-  });
-});
-*/
-/**
- * Errors on "/books/*" routes.
- */
-router.use((err, req, res, next) => {
-  // Format error and forward to generic error handler for logging and
-  // responding to the request
-  err.response = err.message;
-  next(err);
-});
-
-module.exports = router;
